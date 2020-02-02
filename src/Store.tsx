@@ -1,38 +1,51 @@
 import React from 'react';
 import * as Interfaces from './Interfaces'
-import { resolve } from 'url';
 
 const fetchDataAction: Function = async (): Promise<Interfaces.IEpisode[]> => {
-
     const JSONDATA: Interfaces.IEpisode[] =
-        await (await (await (fetch(`https://api.tvmaze.com/singlesearch/shows?q=lost&embed=episodes`)))
-            .json())._embedded.episodes
-
-    const cleanupSummaries: Function = async (episodes: Interfaces.IEpisode[]): Promise<Interfaces.IEpisode[]> => {
-        console.log(`cleaning episode summaries`)
-        return episodes.map((episodeToCleanup: Interfaces.IEpisode) => {
+        await (await (await (fetch(`https://api.tvmaze.com/singlesearch/shows?q=lost&embed=episodes`))).json())._embedded.episodes
+    const cleanupSummaries: Function = async (episodes: Interfaces.IEpisode[]): Promise<Interfaces.IEpisode[]> =>
+        episodes.map((episodeToCleanup: Interfaces.IEpisode) => {
             const newSummary = episodeToCleanup.summary.substring(0, episodeToCleanup.summary.length - 1).substring(3, episodeToCleanup.summary.length - 4)
             return {
                 ...episodeToCleanup,
                 summary: newSummary
             }
         })
-    }
-
-    const cleanedEpisodes: Interfaces.IEpisode[] = await cleanupSummaries(JSONDATA)
-    console.log(cleanedEpisodes)
-    return cleanedEpisodes
+    let result = await cleanupSummaries(JSONDATA)
+    return result
 }
 
 
+const results = (): Interfaces.IState => {
+    let newState: Interfaces.IState = {
+        episodes: [],
+        favorites: []
+    }
+
+    try {
+        const output: Interfaces.IEpisode[] = fetchDataAction()
+        console.log(output)
+        newState = {
+            episodes: output,
+            favorites: []
+        }
+        console.log(newState)
+        return newState
+    } catch (e) {
+    }
+
+    return newState
+}
+
+console.log(results())
 
 let initialState: Interfaces.IState = {
     episodes: [],
     favorites: []
 }
 
-
-export const Store = React.createContext<Interfaces.IState | any>(initialState)
+export const Store = React.createContext<Interfaces.IState | any>(results)
 
 const throwNever: Function = (errorMessage: string): never => {
     throw new Error(errorMessage)
