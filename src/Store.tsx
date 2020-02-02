@@ -1,6 +1,30 @@
 import React from 'react';
 import * as Interfaces from './Interfaces'
 
+const fetchDataAction: Function = async (): Promise<Interfaces.IEpisode[]> => {
+
+    const JSONDATA: Interfaces.IEpisode[] =
+        await (await (await (fetch(`https://api.tvmaze.com/singlesearch/shows?q=lost&embed=episodes`)))
+            .json())._embedded.episodes
+
+    const cleanupSummaries: Function = (episodes: Interfaces.IEpisode[]): Interfaces.IEpisode[] =>
+        episodes.map((episodeToCleanup: Interfaces.IEpisode) => {
+            return {
+                ...episodeToCleanup,
+                summary: episodeToCleanup.summary
+                    .substring(0, episodeToCleanup.summary.length - 1)
+                    .substring(3, episodeToCleanup.summary.length - 4)
+            }
+        })
+
+    const cleanedEpisodes: Interfaces.IEpisode[] = cleanupSummaries(JSONDATA)
+    console.log(`reduced state: fetched state.episodes`)
+
+    return cleanedEpisodes
+}
+
+console.log(fetchDataAction())
+
 const initialState: Interfaces.IState = {
     episodes: [],
     favorites: []
