@@ -1,5 +1,6 @@
 import React from 'react';
 import * as Interfaces from './Interfaces'
+import { resolve } from 'url';
 
 const fetchDataAction: Function = async (): Promise<Interfaces.IEpisode[]> => {
 
@@ -7,28 +8,29 @@ const fetchDataAction: Function = async (): Promise<Interfaces.IEpisode[]> => {
         await (await (await (fetch(`https://api.tvmaze.com/singlesearch/shows?q=lost&embed=episodes`)))
             .json())._embedded.episodes
 
-    const cleanupSummaries: Function = (episodes: Interfaces.IEpisode[]): Interfaces.IEpisode[] =>
-        episodes.map((episodeToCleanup: Interfaces.IEpisode) => {
+    const cleanupSummaries: Function = async (episodes: Interfaces.IEpisode[]): Promise<Interfaces.IEpisode[]> => {
+        console.log(`cleaning episode summaries`)
+        return episodes.map((episodeToCleanup: Interfaces.IEpisode) => {
+            const newSummary = episodeToCleanup.summary.substring(0, episodeToCleanup.summary.length - 1).substring(3, episodeToCleanup.summary.length - 4)
             return {
                 ...episodeToCleanup,
-                summary: episodeToCleanup.summary
-                    .substring(0, episodeToCleanup.summary.length - 1)
-                    .substring(3, episodeToCleanup.summary.length - 4)
+                summary: newSummary
             }
         })
+    }
 
-    const cleanedEpisodes: Interfaces.IEpisode[] = cleanupSummaries(JSONDATA)
-    console.log(`reduced state: fetched state.episodes`)
-
+    const cleanedEpisodes: Interfaces.IEpisode[] = await cleanupSummaries(JSONDATA)
+    console.log(cleanedEpisodes)
     return cleanedEpisodes
 }
 
-console.log(fetchDataAction())
 
-const initialState: Interfaces.IState = {
+
+let initialState: Interfaces.IState = {
     episodes: [],
     favorites: []
 }
+
 
 export const Store = React.createContext<Interfaces.IState | any>(initialState)
 
